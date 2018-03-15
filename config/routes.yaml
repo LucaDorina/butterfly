@@ -1,0 +1,14 @@
+index:
+    path: /
+    methods: ['GET']
+    controller: App\Controller\IndexController::index
+
+index.columns:
+    path: /
+    methods: ['POST']
+    controller: App\Controller\IndexController::chooseColumns
+
+index.convert:
+    path: /convert/{filename}
+    methods: ['POST']
+    controller: App\Controller\IndexController::convert
