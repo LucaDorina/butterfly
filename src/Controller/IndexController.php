@@ -4,6 +4,7 @@ namespace App\Controller;
 
 
 use App\Package\Document\Converter;
+use App\Package\Document\XlsxDocument;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
@@ -59,10 +60,12 @@ class IndexController extends Controller
             );
 
             $path = $file->getRealPath();
+            $sheet = $data['sheet'];
+            $table = new XlsxDocument($path, $sheet);
 
-            $columns = $this->converter->getColumns($path);
+            $columns = $this->converter->getColumns($table);
 
-            $columnsForm = $this->getColumnsForm($file->getFilename(), $columns);
+            $columnsForm = $this->getColumnsForm($file->getFilename(), $sheet, $columns);
             $columnsForm->setData([
                 'filename' => $file->getFilename(),
             ]);
@@ -82,16 +85,17 @@ class IndexController extends Controller
      * @param string $filename
      * @return Response
      */
-    public function convert(Request $request, string $filename)
+    public function convert(Request $request, string $filename, string $worksheet)
     {
-        $columns = $this->converter->getColumns($this->getInputFilePath($filename));
-        $form = $this->getColumnsForm($filename, $columns);
+        $table = new XlsxDocument($this->getInputFilePath($filename), $worksheet);
+        $columns = $this->converter->getColumns($table);
+        $form = $this->getColumnsForm($filename, $worksheet, $columns);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
             $content = $this->converter->xlsxToArff(
-                $this->getInputFilePath($filename),
+                $table,
                 $data['relation'],
                 $data['columns']
             );
@@ -136,10 +140,10 @@ class IndexController extends Controller
      * @param array $columns
      * @return \Symfony\Component\Form\FormInterface
      */
-    protected function getColumnsForm(string $filename, array $columns)
+    protected function getColumnsForm(string $filename, string $worksheet, array $columns)
     {
         return $this->createFormBuilder()
-            ->setAction($this->generateUrl('index.convert', ['filename' => $filename]))
+            ->setAction($this->generateUrl('index.convert', compact('filename', 'worksheet')))
             ->add('filename', HiddenType::class, [
                 'constraints' => new Assert\NotBlank()
             ])
@@ -148,6 +152,7 @@ class IndexController extends Controller
                 'constraints' => new Assert\NotBlank()
             ])
             ->add('columns', ChoiceType::class, [
+                'label' => 'Select parameters you want to process',
                 'multiple' => true,
                 'attr' => ['size' => count($columns)],
                 'choices' => array_flip($columns)
@@ -163,6 +168,10 @@ class IndexController extends Controller
     {
         return $this->createFormBuilder()
             ->setAction($this->generateUrl('index.columns'))
+            ->add('sheet', TextType::class, [
+                'label' => 'Sheet:',
+                'constraints' => new Assert\NotBlank()
+            ])
             ->add('file', FileType::class, [
                 'label' => 'File:',
                 'constraints' => [

@@ -9,6 +9,6 @@ index.columns:
     controller: App\Controller\IndexController::chooseColumns
 
 index.convert:
-    path: /convert/{filename}
+    path: /convert/{filename}/{worksheet}
     methods: ['POST']
     controller: App\Controller\IndexController::convert

@@ -6,10 +6,8 @@ use Cocur\Arff;
 
 class Converter
 {
-    public function getColumns(string $file): array
+    public function getColumns(XlsxDocument $doc): array
     {
-        $doc = new XlsxDocument($file);
-
         $columns = $this->unique(
             $this->filterTitles(
                 $doc->readColumns()
@@ -26,10 +24,8 @@ class Converter
         });
     }
 
-    public function xlsxToArff(string $file, string $relation, array $columns): string
+    public function xlsxToArff(XlsxDocument $doc, string $relation, array $columns): string
     {
-        $doc = new XlsxDocument($file);
-
         $data = $doc->read();
 
         $titles = $data[2];

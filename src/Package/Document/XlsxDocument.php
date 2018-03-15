@@ -11,14 +11,19 @@ class XlsxDocument
      * @var string
      */
     private $filename;
+    /**
+     * @var string
+     */
+    private $worksheet;
 
-    public function __construct(string $filename)
+    public function __construct(string $filename, string $worksheet)
     {
         if (!realpath($filename)) {
             throw new \Exception("File $filename is not exists");
         }
 
         $this->filename = $filename;
+        $this->worksheet = $worksheet;
     }
 
     public function readColumns(): array
@@ -83,6 +88,16 @@ class XlsxDocument
 
         $spreadsheet = $reader->load($this->filename);
 
-        return $spreadsheet->getSheetByName('full_data');
+        if ($this->worksheet) {
+            $worksheet = $spreadsheet->getSheetByName($this->worksheet);
+        } else {
+            $worksheet = $spreadsheet->getActiveSheet();
+        }
+
+        if (is_null($worksheet)) {
+            throw new \Exception('Can not find sheet ' . $this->worksheet);
+        }
+
+        return $worksheet;
     }
 }
